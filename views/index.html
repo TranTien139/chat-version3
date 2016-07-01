@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <link rel="stylesheet" type="text/css" href="/../css/bootstrap.min.css" />
+    <style>
+      body { font: 13px Helvetica, Arial; }
+      .sendmessage { background: #000; padding: 2px; display: none; }
+      .sendmessage{ width: 270px; position: absolute; bottom: 0px;}
+      .sendmessage input { border: 1px; padding: 5px; width: 216px; margin-right: 0px; }
+      .sendmessage button { width: 50px; background: rgb(130, 224, 255); border: none; padding: 5px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; display: none;}
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #contentWrap{display: block; position: fixed; bottom: 0px; right: 2%; border: 1px solid #444;  height: 360px; width: 272px;}
+      .error{color: red;}
+      .wisper{color: gray; font-style: italic;}
+      .msg{color: blue;}
+      .info-asistance img{padding: 5px;}
+      .info-asistance{border-bottom: 1px solid #444}
+      .headchat{padding: 5px; background: #c00;}
+      #nickWrap{ margin: 5px;}
+      .hidden-chat{font-size: 28px; margin-top: -6px;}
+      #users{display: none;}
+    </style>
+  </head>
+  <body>
+   <div id="contentWrap">
+   <div class="chatWrap">
+   <div class="headchat" id="headchat">
+     <ul class="list-inline">
+       <li>save customer</li>
+       <li class="pull-right hidden-chat">x</li>
+     </ul>
+   </div>
+   <div class="info-asistance">
+       <img src="" align="img" width="40" height="40">
+       <span id='id_admin'>cskh</span>
+   </div>
+
+    <ul id="messages"></ul>
+    <div id="nickWrap">
+     <form id="setnick">
+     <p>enter your nickname</p>
+     <p id="nickError"></p>
+      <div class="input-group">
+       <input type="text" id="nickname" class="form-control">
+       <span class="input-group-btn">
+       <button type="submit" class="btn btn-default">send</button>
+       </span>
+       </div>
+
+     </form>
+  </div>
+
+    <form action="" class="sendmessage">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    </div>
+    <div id="users"></div>
+    </div>
+    
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+
+      <script type="text/javascript">
+  function writeCookie(name,value,days) {
+    var date, expires;
+    if (days) {
+        date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        expires = "; expires=" + date.toGMTString();
+            }else{
+        expires = "";
+    }
+    document.cookie = name + "=" + value + expires + "; path=/";
+}
+
+function readCookie(name) {
+    var i, c, ca, nameEQ = name + "=";
+    ca = document.cookie.split(';');
+    for(i=0;i < ca.length;i++) {
+        c = ca[i];
+        while (c.charAt(0)==' ') {
+            c = c.substring(1,c.length);
+        }
+        if (c.indexOf(nameEQ) == 0) {
+            return c.substring(nameEQ.length,c.length);
+        }
+    }
+    return '';
+    }
+
+    function makeid()
+      {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 12; i++ )
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+      }
+
+   </script>
+
+    <script>
+      var socket = io();
+      var $nickname = $('#nickname');
+      var $users = $('#users');
+      var $nickError = $('#nickError');
+
+      var sId = makeid();
+      writeCookie('sessionId', sId, 1);
+      var sId1 = readCookie('sessionId');
+      socket.emit('no user', sId1, function(data){
+      });
+      
+      $('#setnick').submit(function(e){
+        e.preventDefault();
+
+        socket.emit('delete no user', sId1, function(data){
+        });
+
+        socket.emit('new user', $nickname.val(), function(data){
+           if(data){
+            socket.emit('connected',{nameFrom:$nickname.val(),nameTo:$("#id_admin").text()});
+              $('#nickWrap').hide();
+              $('#messages').show();
+              $('.sendmessage').show();
+           }else{
+            $nickError.html('nick name error, please try again. ');
+           }
+        });
+       // $nickname.val('');
+      });
+
+
+      socket.on('usernames', function(data){
+         var html = '';
+         for(var i=0; i< data.length; i++){
+          html += data[i]+'<br/>';
+         }
+         $users.html(html);
+      });
+      $('.sendmessage').submit(function(e){
+        e.preventDefault();
+        socket.emit('chat message', {msg:$('#m').val(),nameFrom:$nickname.val(),nameTo:$("#id_admin").text()});
+        $('#m').val('');
+        return false;
+      });
+
+      var ele = $("#id_admin").text();
+      socket.on('chat message', function (msg) {
+          var textData = msg.nameFrom + ' : ' + msg.msg;
+          $('#messages').append($('<li>').text(textData));
+      });
+
+      
+    </script>
+
+    <script type="text/javascript">
+     $(document).ready(function(){
+    $("#headchat").click(function(){
+      if($('#contentWrap').css('height')=='40px'){
+      $('#contentWrap').animate({height:'360px'}, 'slow');
+      $('.sendmessage').show();
+    }else{
+      $('#contentWrap').animate({height:'40px'}, 'slow');
+      $('.sendmessage').hide();
+    }
+    });
+  });
+   </script>
+
+  </body>
+</html>
