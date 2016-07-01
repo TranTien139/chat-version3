@@ -19,18 +19,9 @@ mongoose.connect('mongodb://localhost/chat',function(err){
   }
 });
 
-// var chatSchema = mongoose.Schema({
-//    nick: String,
-//    msg: String,
-//    created:{type:Date, default: Date.now}
-// });
-
-// var Chat = mongoose.model('messages',chatSchema);
-
 require('./config/passport.js')(passport); 
 var env = process.env.NODE_ENV || 'development';
 if ('development' == env) {
-  //app.use(bodyParser.json());
   app.use( bodyParser.urlencoded({ extended: true }) );
   app.use(express.static(path.join(__dirname, 'public')));
   app.set('views', __dirname + '/views');
